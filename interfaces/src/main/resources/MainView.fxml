@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.control.Button?>
+
+<StackPane xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.MainController">
+    <Button text="Botón 1" onAction="#handleButton1" />
+    <Button text="Botón 2" onAction="#handleButton2" />
+    <Button text="Botón 3" onAction="#handleButton3" />
+</StackPane>

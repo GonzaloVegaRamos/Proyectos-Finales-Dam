@@ -57,7 +57,7 @@
                     </execution>
                 </executions>
                 <configuration>
- <mainClass>com.example.MainApp</mainClass>  <!-- Asegúrate de cambiarlo por la ruta correcta -->
+ <mainClass>com.example.Main</mainClass>  <!-- Asegúrate de cambiarlo por la ruta correcta -->
     <modules>
         <module>javafx.controls</module>
         <module>javafx.fxml</module>
