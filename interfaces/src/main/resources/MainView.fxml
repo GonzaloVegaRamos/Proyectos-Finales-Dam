@@ -13,5 +13,9 @@
     <Button text="Mostrar Empleados" onAction="#mostrarEmpleados" />
     <Button text="Mostrar Ventas" onAction="#mostrarVentas" />
     <Button text="Sacar PDF" onAction="#sacarpdf" />
+    
+    <!-- Botón para abrir el CRUD -->
+    <Button text="Abrir CRUD" onAction="#abrirCRUD" />
+    
     <TextArea fx:id="resultadoArea" editable="false" wrapText="true" />
 </VBox>
