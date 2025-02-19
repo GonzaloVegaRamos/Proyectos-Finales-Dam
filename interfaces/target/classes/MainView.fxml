@@ -12,5 +12,6 @@
     <Button text="Mostrar Productos" onAction="#mostrarProductos" />
     <Button text="Mostrar Empleados" onAction="#mostrarEmpleados" />
     <Button text="Mostrar Ventas" onAction="#mostrarVentas" />
+    <Button text="Sacar PDF" onAction="#sacarpdf" />
     <TextArea fx:id="resultadoArea" editable="false" wrapText="true" />
 </VBox>

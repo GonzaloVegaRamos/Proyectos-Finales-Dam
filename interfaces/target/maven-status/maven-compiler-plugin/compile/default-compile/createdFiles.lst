@@ -1,2 +1,3 @@
-com\example\MainController.class
 com\example\Main.class
+com\example\DatabaseConnection.class
+com\example\MainController.class

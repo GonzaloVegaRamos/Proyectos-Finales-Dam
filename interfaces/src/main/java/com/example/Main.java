@@ -21,6 +21,10 @@ public class Main extends Application {
     }
 
     public static void main(String[] args) {
+        // Llamar a la función para generar el PDF
+        
         launch(args);
     }
+
+
 }
