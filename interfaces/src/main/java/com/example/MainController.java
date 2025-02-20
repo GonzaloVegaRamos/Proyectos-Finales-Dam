@@ -3,20 +3,127 @@ package com.example;
 import java.io.FileOutputStream;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.itextpdf.text.Document;
 import com.itextpdf.text.DocumentException;
 import com.itextpdf.text.Paragraph;
 import com.itextpdf.text.pdf.PdfWriter;
 
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
+import javafx.scene.Node;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.TextArea;
-import javafx.stage.Stage;
+import javafx.scene.layout.VBox;
 
 public class MainController {
+
+    @FXML
+    private VBox productosVBox;
+    
+    @FXML
+    private VBox empleadosVBox;
+    
+    @FXML
+    private VBox ventasVBox;
+    
+
+    
+    @FXML
+    private void aplicarFiltros(ActionEvent event) {
+        // Obtener los filtros seleccionados de cada VBox
+        List<String> productosSeleccionados = getSelectedCheckBoxes(productosVBox);
+        List<String> empleadosSeleccionados = getSelectedCheckBoxes(empleadosVBox);
+        List<String> ventasSeleccionados = getSelectedCheckBoxes(ventasVBox);
+    
+        // Contar cuántos VBox tienen checkboxes seleccionados
+        int vboxSeleccionados = 0;
+        if (!productosSeleccionados.isEmpty()) vboxSeleccionados++;
+        if (!empleadosSeleccionados.isEmpty()) vboxSeleccionados++;
+        if (!ventasSeleccionados.isEmpty()) vboxSeleccionados++;
+
+                // Validación: solo un VBox puede tener checkboxes seleccionados
+                if (vboxSeleccionados > 1) {
+                    resultadoArea.setText("Error: Solo puedes seleccionar filtros de una categoría a la vez.");
+                    return;
+                }
+
+        String vboxSelecionado="";
+        if (!ventasSeleccionados.isEmpty()) {
+            vboxSelecionado ="Ventas";
+        }
+        if (!empleadosSeleccionados.isEmpty()) {
+            vboxSelecionado ="Empleados";
+        }
+        if (!productosSeleccionados.isEmpty()) {
+            vboxSelecionado ="Productos";
+        }
+
+        // Mostrar el resultado si solo un VBox tiene checkboxes seleccionados
+        List<String> filtrosSeleccionados = new ArrayList<>();
+        filtrosSeleccionados.addAll(productosSeleccionados);
+        filtrosSeleccionados.addAll(empleadosSeleccionados);
+        filtrosSeleccionados.addAll(ventasSeleccionados);
+    
+        if (filtrosSeleccionados.isEmpty()) {
+            resultadoArea.setText("No se ha seleccionado ningún filtro.");
+        } else {
+            resultadoArea.setText("Filtros aplicados: " + String.join(", ", filtrosSeleccionados));
+        }
+
+            switch (vboxSelecionado) {
+                case "Ventas":
+                    System.out.println("Filtrando por ID Producto...");
+                   
+                    break;
+                case "Empleados":
+                    System.out.println("Filtrando por Nombre...");
+                    
+                    break;
+                case "Productos":
+
+                break;
+                default:
+                    System.out.println("Filtro no reconocido.");
+                    break;
+                }
+   
+
+        // String sql = "SELECT * FROM Ventas";
+
+        // ResultSet resultSet = dbConnection.executeQuery(sql);
+
+        // StringBuilder resultado = new StringBuilder();
+
+        // while (resultSet.next()) { // Iteramos sobre todos los resultados
+        //     int id = resultSet.getInt("id_producto");
+        //     String nombre = resultSet.getString("nombre");
+        //     double precio = resultSet.getDouble("precio");
+        //     int stock = resultSet.getInt("stock");
+        // }
+    }
+    
+    // Método para obtener los checkboxes seleccionados dentro de un VBox
+    private List<String> getSelectedCheckBoxes(VBox vbox) {
+        List<String> selected = new ArrayList<>();
+        
+        for (Node node : vbox.getChildren()) {
+            if (node instanceof CheckBox checkBox && checkBox.isSelected()) {
+                selected.add(checkBox.getText());
+            }
+        }
+        
+        return selected;
+    }
+    
+    
+
+
+
+
+
     @FXML
     private TextArea resultadoArea;
 
@@ -79,23 +186,7 @@ public class MainController {
         }
     }
 
-    // Método que abre la ventana de CRUD
-    @FXML
-    private void abrirCRUD() {
-        try {
-            // Cargar el archivo FXML de la vista CRUD
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/views/CRUDView.fxml"));
-            Parent root = loader.load();
-            
-            // Crear una nueva ventana para mostrar la vista CRUD
-            Stage stage = new Stage();
-            stage.setTitle("Gestión de CRUD");
-            stage.setScene(new Scene(root, 400, 300));
-            stage.show();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
+   
 
     private void mostrarDatos(String sql) {
         resultadoArea.clear(); 
@@ -153,4 +244,5 @@ public class MainController {
             resultadoArea.setText("Error al ejecutar la consulta: " + e.getMessage());
         }
     }
+
 }

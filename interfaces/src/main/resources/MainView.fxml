@@ -2,20 +2,63 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TitledPane?>
 <?import javafx.scene.layout.VBox?>
+
+<?import javafx.scene.layout.HBox?>
 
 <VBox xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.MainController" spacing="10">
     <padding>
         <Insets top="10" right="10" bottom="10" left="10"/>
     </padding>
-    <Button text="Mostrar Productos" onAction="#mostrarProductos" />
-    <Button text="Mostrar Empleados" onAction="#mostrarEmpleados" />
-    <Button text="Mostrar Ventas" onAction="#mostrarVentas" />
-    <Button text="Sacar PDF" onAction="#sacarpdf" />
     
-    <!-- Botón para abrir el CRUD -->
-    <Button text="Abrir CRUD" onAction="#abrirCRUD" />
+<HBox spacing="10">
+<Button text="✓" onAction="#mostrarProductos"/>
+    <TitledPane text="Productos" collapsible="true" expanded="false">
+        <VBox fx:id="productosVBox" spacing="5">
+            <CheckBox text="ID Producto" />
+            <CheckBox text="Nombre" />
+            <CheckBox text="Categoría" />
+            <CheckBox text="Precio" />
+            <CheckBox text="Stock" />
+        </VBox>
+    </TitledPane>
+</HBox>
+
+
+<HBox spacing="10">
+<Button text="✓" onAction="#mostrarEmpleados" />
+<TitledPane text="Empleados" collapsible="true" expanded="false">
+    <VBox fx:id="empleadosVBox" spacing="5">
+        <CheckBox text="ID Empleado" />
+        <CheckBox text="Nombre" />
+        <CheckBox text="Cargo" />
+        <CheckBox text="Fecha de Contratación" />
+    </VBox>
+</TitledPane>
+</HBox>
+
+
+<HBox spacing="10">
+<Button text="✓" onAction="#mostrarVentas"/>
+<TitledPane text="Ventas" collapsible="true" expanded="false">
+    <VBox fx:id="ventasVBox" spacing="5">
+        <CheckBox text="ID Venta" />
+        <CheckBox text="ID Empleado" />
+        <CheckBox text="ID Producto" />
+        <CheckBox text="Cantidad" />
+        <CheckBox text="Fecha Venta" />
+        <CheckBox text="Total Venta" />
+    </VBox>
+</TitledPane>
+</HBox>
+    
+    <HBox spacing="10">
+        <Button text="Aplicar Filtros" onAction="#aplicarFiltros" />
+        <Button text="Sacar PDF" onAction="#sacarpdf" />
+    </HBox>
     
     <TextArea fx:id="resultadoArea" editable="false" wrapText="true" />
 </VBox>

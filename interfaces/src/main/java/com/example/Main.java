@@ -14,7 +14,7 @@ public class Main extends Application {
         VBox root = FXMLLoader.load(getClass().getResource("/MainView.fxml"));
 
         // Crear la escena y mostrarla
-        Scene scene = new Scene(root, 400, 300);
+        Scene scene = new Scene(root, 500, 500);
         primaryStage.setTitle("Menú Interactivo con JavaFX");
         primaryStage.setScene(scene);
         primaryStage.show();
