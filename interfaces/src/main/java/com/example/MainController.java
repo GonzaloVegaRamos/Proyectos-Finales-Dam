@@ -10,6 +10,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import javax.imageio.ImageIO;
@@ -100,12 +101,6 @@ public class MainController {
 
             // Gráficas
             if (Gproducto.isSelected()) {
-                // Título para gráfico de productos
-                Paragraph tituloGraficoProductos = new Paragraph("Gráfico de Ventas por Producto",
-                        FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14));
-                tituloGraficoProductos.setAlignment(Element.ALIGN_LEFT);
-                document.add(tituloGraficoProductos);
-                document.add(new Chunk("\n"));
 
                 JFreeChart graficoProductos = graficos.crearGraficoVentasPorProducto();
                 Image chartProductos = graficos.crearImagenDesdeGrafico(graficoProductos);
@@ -117,12 +112,6 @@ public class MainController {
             }
 
             if (Gempleado.isSelected()) {
-                // Título para gráfico de empleados
-                Paragraph tituloGraficoEmpleados = new Paragraph("Gráfico de Ventas por Empleado",
-                        FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14));
-                tituloGraficoEmpleados.setAlignment(Element.ALIGN_LEFT);
-                document.add(tituloGraficoEmpleados);
-                document.add(new Chunk("\n"));
 
                 JFreeChart graficoVentas = graficos.crearGraficoVentasPorEmpleado();
                 Image chartEmpleados = graficos.crearImagenDesdeGrafico(graficoVentas);
@@ -134,35 +123,52 @@ public class MainController {
             }
 
             // Obtener las tablas generadas
-            List<JTable> tablas = aplicarFiltros();
+            List<TablaConEtiqueta> tablas = aplicarFiltros();
             if (tablas != null && !tablas.isEmpty()) {
                 // Iterar sobre cada JTable en la lista
-                for (JTable tabla : tablas) {
+                for (TablaConEtiqueta tabla : tablas) {
 
-                    // Título de la tabla
-                    Paragraph tituloTabla = new Paragraph("Datos de la Tabla",
-                            FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14));
-                    tituloTabla.setAlignment(Element.ALIGN_LEFT);
-                    document.add(tituloTabla);
-                    document.add(new Chunk("\n"));
+                    if (tabla.etiqueta == "productos") {
+                        Paragraph tituloTabla = new Paragraph("Datos de la Tabla PRODUCTOS",
+                                FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14));
+                        tituloTabla.setAlignment(Element.ALIGN_LEFT);
+                        document.add(tituloTabla);
+                        document.add(new Chunk("\n"));
+                    }
+
+                    if (tabla.etiqueta == "empleados") {
+                        Paragraph tituloTabla = new Paragraph("Datos de la Tabla EMPLEADOS",
+                                FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14));
+                        tituloTabla.setAlignment(Element.ALIGN_LEFT);
+                        document.add(tituloTabla);
+                        document.add(new Chunk("\n"));
+                    }
+
+                    if (tabla.etiqueta == "ventas") {
+                        Paragraph tituloTabla = new Paragraph("Datos de la Tabla VENTAS",
+                                FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14));
+                        tituloTabla.setAlignment(Element.ALIGN_LEFT);
+                        document.add(tituloTabla);
+                        document.add(new Chunk("\n"));
+                    }
 
                     // Crear una PdfPTable con el número de columnas de la JTable
-                    PdfPTable pdfTable = new PdfPTable(tabla.getColumnCount());
+                    PdfPTable pdfTable = new PdfPTable(tabla.tabla.getColumnCount());
                     pdfTable.setWidthPercentage(100); // Ocupa todo el ancho de la página
 
                     // Agregar los encabezados de columna con estilo
                     Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD);
-                    for (int i = 0; i < tabla.getColumnCount(); i++) {
-                        PdfPCell cell = new PdfPCell(new Phrase(tabla.getColumnName(i), headerFont));
+                    for (int i = 0; i < tabla.tabla.getColumnCount(); i++) {
+                        PdfPCell cell = new PdfPCell(new Phrase(tabla.tabla.getColumnName(i), headerFont));
                         cell.setHorizontalAlignment(Element.ALIGN_CENTER);
                         cell.setBackgroundColor(BaseColor.LIGHT_GRAY); // Fondo gris para los encabezados
                         pdfTable.addCell(cell);
                     }
 
                     // Agregar las filas de datos
-                    for (int i = 0; i < tabla.getRowCount(); i++) {
-                        for (int j = 0; j < tabla.getColumnCount(); j++) {
-                            PdfPCell cell = new PdfPCell(new Phrase(tabla.getValueAt(i, j).toString()));
+                    for (int i = 0; i < tabla.tabla.getRowCount(); i++) {
+                        for (int j = 0; j < tabla.tabla.getColumnCount(); j++) {
+                            PdfPCell cell = new PdfPCell(new Phrase(tabla.tabla.getValueAt(i, j).toString()));
                             cell.setHorizontalAlignment(Element.ALIGN_CENTER);
                             pdfTable.addCell(cell);
                         }
@@ -201,81 +207,76 @@ public class MainController {
     public void sacarExcel(ActionEvent event) throws SQLException, IOException {
         // Crear un libro de trabajo (workbook)
         Workbook workbook = new XSSFWorkbook();
-        XSSFSheet sheet = (XSSFSheet) workbook.createSheet("Datos");
-
-        // Crear una fila para el título
-        Row row = sheet.createRow(0);
-        Cell cell = row.createCell(0);
-        cell.setCellValue("Informe de Ventas");
 
         // Crear un contenedor de gráficos en la hoja
-        XSSFDrawing drawing = sheet.createDrawingPatriarch();
-
-        // Agregar gráficos si están seleccionados
-        if (Gproducto.isSelected()) {
-            JFreeChart graficoProductos = graficos.crearGraficoVentasPorProducto();
-            com.itextpdf.text.Image chartProductos = graficos.crearImagenDesdeGrafico(graficoProductos);
-            System.out.println("Imagen generada con éxito. Tamaño: " + chartProductos.getWidth() + "x"
-                    + chartProductos.getHeight());
-
-            // Convertir la imagen de iText a BufferedImage
-            BufferedImage bufferedImage = convertirABufferedImage(chartProductos);
-
-            // Agregar la imagen del gráfico al archivo Excel
-            byte[] imageBytes = imageToByteArray(bufferedImage);
-            int pictureIdx = ((XSSFWorkbook) workbook).addPicture(imageBytes, Workbook.PICTURE_TYPE_JPEG);
-
-            // Crear un ancla para colocar la imagen
-            ClientAnchor anchor = drawing.createAnchor(0, 0, 0, 0, 0, 1, 5, 6); // Parámetros para anclar la imagen a la
-                                                                                // celda
-            XSSFPicture picture = drawing.createPicture(anchor, pictureIdx);
-            picture.resize(1.0);
-
-        } else if (Gempleado.isSelected()) {
-            JFreeChart graficoVentas = graficos.crearGraficoVentasPorEmpleado();
-            com.itextpdf.text.Image chartEmpleados = graficos.crearImagenDesdeGrafico(graficoVentas);
-            System.out.println("Imagen generada con éxito. Tamaño: " + chartEmpleados.getWidth() + "x"
-                    + chartEmpleados.getHeight());
-
-            // Convertir la imagen de iText a BufferedImage
-            BufferedImage bufferedImage = convertirABufferedImage(chartEmpleados);
-
-            // Agregar la imagen del gráfico al archivo Excel
-            byte[] imageBytes = imageToByteArray(bufferedImage);
-            int pictureIdx = ((XSSFWorkbook) workbook).addPicture(imageBytes, Workbook.PICTURE_TYPE_JPEG);
-
-            // Crear un ancla para colocar la imagen
-            ClientAnchor anchor = drawing.createAnchor(0, 0, 0, 0, 0, 1, 5, 6); // Parámetros para anclar la imagen a la
-                                                                                // celda
-            XSSFPicture picture = drawing.createPicture(anchor, pictureIdx);
-            picture.resize(1.0);
-        }
+        XSSFDrawing drawing;
 
         // Obtener las tablas generadas
-        List<JTable> tablas = aplicarFiltros();
+        List<TablaConEtiqueta> tablas = aplicarFiltros();
         if (tablas != null && !tablas.isEmpty()) {
-            int rowIndex = 3; // Empezamos desde la fila 3 para las tablas
+            int sheetIndex = 0; // Para llevar el control de las hojas creadas
 
-            // Iterar sobre cada JTable en la lista
-            for (JTable tabla : tablas) {
-                // Crear una nueva fila para la tabla
-                row = sheet.createRow(rowIndex++);
+            // Iterar sobre cada tabla en la lista
+            for (TablaConEtiqueta tabla : tablas) {
+                // Crear una nueva hoja para cada tabla
+                XSSFSheet sheet = (XSSFSheet) workbook.createSheet(tabla.getEtiqueta());
+
+                // Título de la hoja (Tabla: Productos, Empleados, Ventas, etc.)
+                Row row = sheet.createRow(0);
+                Cell cell = row.createCell(0);
+                cell.setCellValue("Informe de " + tabla.getEtiqueta()); // Título de la tabla
+
+                // Agregar gráfico si es necesario
+                drawing = sheet.createDrawingPatriarch();
+                if ("Productos".equals(tabla.getEtiqueta()) && Gproducto.isSelected()) {
+                    JFreeChart graficoProductos = graficos.crearGraficoVentasPorProducto();
+                    com.itextpdf.text.Image chartProductos = graficos.crearImagenDesdeGrafico(graficoProductos);
+                    BufferedImage bufferedImage = convertirABufferedImage(chartProductos);
+                    byte[] imageBytes = imageToByteArray(bufferedImage);
+                    int pictureIdx = ((XSSFWorkbook) workbook).addPicture(imageBytes, Workbook.PICTURE_TYPE_JPEG);
+                    ClientAnchor anchor = drawing.createAnchor(0, 0, 0, 0, 0, 1, 5, 6);
+                    XSSFPicture picture = drawing.createPicture(anchor, pictureIdx);
+                    picture.resize(1.0);
+                } else if ("Empleados".equals(tabla.getEtiqueta()) && Gempleado.isSelected()) {
+                    JFreeChart graficoVentas = graficos.crearGraficoVentasPorEmpleado();
+                    com.itextpdf.text.Image chartEmpleados = graficos.crearImagenDesdeGrafico(graficoVentas);
+                    BufferedImage bufferedImage = convertirABufferedImage(chartEmpleados);
+                    byte[] imageBytes = imageToByteArray(bufferedImage);
+                    int pictureIdx = ((XSSFWorkbook) workbook).addPicture(imageBytes, Workbook.PICTURE_TYPE_JPEG);
+                    ClientAnchor anchor = drawing.createAnchor(0, 0, 0, 0, 0, 1, 5, 6);
+                    XSSFPicture picture = drawing.createPicture(anchor, pictureIdx);
+                    picture.resize(1.0);
+                }
+
+                // Comenzamos a agregar la tabla a la hoja
+                int rowIndex = 2; // Fila donde empieza la tabla (después del título)
+
                 // Agregar los encabezados de columna
-                for (int i = 0; i < tabla.getColumnCount(); i++) {
+                for (int i = 0; i < tabla.getTabla().getColumnCount(); i++) {
+                    row = sheet.createRow(rowIndex++);
                     cell = row.createCell(i);
-                    cell.setCellValue(tabla.getColumnName(i));
+                    cell.setCellValue(tabla.getTabla().getColumnName(i));
                 }
 
                 // Agregar las filas de datos
-                for (int i = 0; i < tabla.getRowCount(); i++) {
+                for (int i = 0; i < tabla.getTabla().getRowCount(); i++) {
                     row = sheet.createRow(rowIndex++);
-                    for (int j = 0; j < tabla.getColumnCount(); j++) {
+                    for (int j = 0; j < tabla.getTabla().getColumnCount(); j++) {
                         cell = row.createCell(j);
-                        cell.setCellValue(tabla.getValueAt(i, j).toString());
+                        // Manejar el tipo de dato de cada celda
+                        Object value = tabla.getTabla().getValueAt(i, j);
+                        if (value instanceof Number) {
+                            cell.setCellValue(((Number) value).doubleValue());
+                        } else if (value instanceof Date) {
+                            cell.setCellValue((Date) value);
+                        } else {
+                            cell.setCellValue(value.toString());
+                        }
                     }
                 }
 
-                // Añadir un salto de línea entre tablas (agregar una fila vacía)
+                // Añadir un salto de línea entre tablas (agregar una fila vacía) si es
+                // necesario
                 sheet.createRow(rowIndex++);
             }
         } else {
@@ -358,38 +359,6 @@ public class MainController {
         }
     }
 
-    @FXML
-    private TextArea resultadoArea;
-
-    public List<JTable> aplicarFiltros() {
-        // Obtener los filtros seleccionados de cada VBox
-        List<String> productosSeleccionados = getSelectedCheckBoxes(productosVBox);
-        List<String> empleadosSeleccionados = getSelectedCheckBoxes(empleadosVBox);
-        List<String> ventasSeleccionados = getSelectedCheckBoxes(ventasVBox);
-
-        resultadoArea.setText("Filtros Productos: " + String.join(", ", productosSeleccionados));
-        resultadoArea.setText("Filtros Empleados: " + String.join(", ", empleadosSeleccionados));
-        resultadoArea.setText("Filtros Ventas: " + String.join(", ", ventasSeleccionados));
-
-        String sql = "";
-        List<JTable> tablasGeneradas = new ArrayList<>();
-
-        if (!productosSeleccionados.isEmpty()) {
-            sql = "SELECT " + String.join(", ", productosSeleccionados) + " FROM Productos";
-            tablasGeneradas.add(mostrarDatos(sql));
-        }
-        if (!empleadosSeleccionados.isEmpty()) {
-            sql = "SELECT " + String.join(", ", empleadosSeleccionados) + " FROM Empleados";
-            tablasGeneradas.add(mostrarDatos(sql));
-        }
-        if (!ventasSeleccionados.isEmpty()) {
-            sql = "SELECT " + String.join(", ", ventasSeleccionados) + " FROM Ventas";
-            JTable tablaVentas = mostrarDatos(sql);
-            tablasGeneradas.add(tablaVentas);
-        }
-        return tablasGeneradas;
-    }
-
     // Método para obtener los checkboxes seleccionados dentro de un VBox
     private List<String> getSelectedCheckBoxes(VBox vbox) {
         List<String> selected = new ArrayList<>();
@@ -401,6 +370,37 @@ public class MainController {
         }
 
         return selected;
+    }
+
+    @FXML
+    private TextArea resultadoArea;
+
+    public List<TablaConEtiqueta> aplicarFiltros() {
+        // Obtener los filtros seleccionados de cada VBox
+        List<String> productosSeleccionados = getSelectedCheckBoxes(productosVBox);
+        List<String> empleadosSeleccionados = getSelectedCheckBoxes(empleadosVBox);
+        List<String> ventasSeleccionados = getSelectedCheckBoxes(ventasVBox);
+
+        resultadoArea.setText("Filtros Productos: " + String.join(", ", productosSeleccionados));
+        resultadoArea.setText("Filtros Empleados: " + String.join(", ", empleadosSeleccionados));
+        resultadoArea.setText("Filtros Ventas: " + String.join(", ", ventasSeleccionados));
+
+        String sql = "";
+        List<TablaConEtiqueta> tablasGeneradas = new ArrayList<>();
+
+        if (!productosSeleccionados.isEmpty()) {
+            sql = "SELECT " + String.join(", ", productosSeleccionados) + " FROM Productos";
+            tablasGeneradas.add(new TablaConEtiqueta(mostrarDatos(sql), "productos"));
+        }
+        if (!empleadosSeleccionados.isEmpty()) {
+            sql = "SELECT " + String.join(", ", empleadosSeleccionados) + " FROM Empleados";
+            tablasGeneradas.add(new TablaConEtiqueta(mostrarDatos(sql), "empleados"));
+        }
+        if (!ventasSeleccionados.isEmpty()) {
+            sql = "SELECT " + String.join(", ", ventasSeleccionados) + " FROM Ventas";
+            tablasGeneradas.add(new TablaConEtiqueta(mostrarDatos(sql), "ventas"));
+        }
+        return tablasGeneradas;
     }
 
     public JTable mostrarDatos(String sql) {
@@ -438,6 +438,24 @@ public class MainController {
         }
 
         return table;
+    }
+
+    public class TablaConEtiqueta {
+        private JTable tabla;
+        private String etiqueta;
+
+        public TablaConEtiqueta(JTable tabla, String etiqueta) {
+            this.tabla = tabla;
+            this.etiqueta = etiqueta;
+        }
+
+        public JTable getTabla() {
+            return tabla;
+        }
+
+        public String getEtiqueta() {
+            return etiqueta;
+        }
     }
 
 }
