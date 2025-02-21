@@ -1,21 +1,29 @@
 package com.example;
 
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.imageio.ImageIO;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.ClientAnchor;
 import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFDrawing;
+import org.apache.poi.xssf.usermodel.XSSFPicture;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.jfree.chart.JFreeChart;
 
@@ -136,54 +144,121 @@ public class MainController {
         JOptionPane.showMessageDialog(null, "PDF generado exitosamente.");
     }
 
-    public void sacarExcel(ActionEvent event) {
-        List<JTable> tablas = aplicarFiltros(); // Obtener las tablas generadas
+    public void sacarExcel(ActionEvent event) throws SQLException, IOException {
+        // Crear un libro de trabajo (workbook)
+        Workbook workbook = new XSSFWorkbook();
+        XSSFSheet sheet = (XSSFSheet) workbook.createSheet("Datos");
+
+        // Crear una fila para el título
+        Row row = sheet.createRow(0);
+        Cell cell = row.createCell(0);
+        cell.setCellValue("Informe de Ventas");
+
+        // Crear un contenedor de gráficos en la hoja
+        XSSFDrawing drawing = sheet.createDrawingPatriarch();
+
+        // Agregar gráficos si están seleccionados
+        if (Gproducto.isSelected()) {
+            JFreeChart graficoProductos = graficos.crearGraficoVentasPorProducto();
+            com.itextpdf.text.Image chartProductos = graficos.crearImagenDesdeGrafico(graficoProductos);
+            System.out.println("Imagen generada con éxito. Tamaño: " + chartProductos.getWidth() + "x"
+                    + chartProductos.getHeight());
+
+            // Convertir la imagen de iText a BufferedImage
+            BufferedImage bufferedImage = convertirABufferedImage(chartProductos);
+
+            // Agregar la imagen del gráfico al archivo Excel
+            byte[] imageBytes = imageToByteArray(bufferedImage);
+            int pictureIdx = ((XSSFWorkbook) workbook).addPicture(imageBytes, Workbook.PICTURE_TYPE_JPEG);
+
+            // Crear un ancla para colocar la imagen
+            ClientAnchor anchor = drawing.createAnchor(0, 0, 0, 0, 0, 1, 5, 6); // Parámetros para anclar la imagen a la
+                                                                                // celda
+            XSSFPicture picture = drawing.createPicture(anchor, pictureIdx);
+            picture.resize(1.0);
+
+        } else if (Gempleado.isSelected()) {
+            JFreeChart graficoVentas = graficos.crearGraficoVentasPorEmpleado();
+            com.itextpdf.text.Image chartEmpleados = graficos.crearImagenDesdeGrafico(graficoVentas);
+            System.out.println("Imagen generada con éxito. Tamaño: " + chartEmpleados.getWidth() + "x"
+                    + chartEmpleados.getHeight());
+
+            // Convertir la imagen de iText a BufferedImage
+            BufferedImage bufferedImage = convertirABufferedImage(chartEmpleados);
+
+            // Agregar la imagen del gráfico al archivo Excel
+            byte[] imageBytes = imageToByteArray(bufferedImage);
+            int pictureIdx = ((XSSFWorkbook) workbook).addPicture(imageBytes, Workbook.PICTURE_TYPE_JPEG);
+
+            // Crear un ancla para colocar la imagen
+            ClientAnchor anchor = drawing.createAnchor(0, 0, 0, 0, 0, 1, 5, 6); // Parámetros para anclar la imagen a la
+                                                                                // celda
+            XSSFPicture picture = drawing.createPicture(anchor, pictureIdx);
+            picture.resize(1.0);
+        }
+
+        // Obtener las tablas generadas
+        List<JTable> tablas = aplicarFiltros();
         if (tablas != null && !tablas.isEmpty()) {
-            try {
-                // Crear un libro de trabajo Excel
-                Workbook workbook = new XSSFWorkbook();
+            int rowIndex = 3; // Empezamos desde la fila 3 para las tablas
 
-                // Iterar sobre cada JTable en la lista
-                for (int i = 0; i < tablas.size(); i++) {
-                    JTable tabla = tablas.get(i);
+            // Iterar sobre cada JTable en la lista
+            for (JTable tabla : tablas) {
+                // Crear una nueva fila para la tabla
+                row = sheet.createRow(rowIndex++);
+                // Agregar los encabezados de columna
+                for (int i = 0; i < tabla.getColumnCount(); i++) {
+                    cell = row.createCell(i);
+                    cell.setCellValue(tabla.getColumnName(i));
+                }
 
-                    // Crear una hoja para cada JTable
-                    Sheet sheet = workbook.createSheet("Tabla " + (i + 1));
-
-                    // Crear una fila para los encabezados de columna
-                    Row headerRow = sheet.createRow(0);
+                // Agregar las filas de datos
+                for (int i = 0; i < tabla.getRowCount(); i++) {
+                    row = sheet.createRow(rowIndex++);
                     for (int j = 0; j < tabla.getColumnCount(); j++) {
-                        // Crear la celda para el encabezado
-                        Cell cell = headerRow.createCell(j);
-                        cell.setCellValue(tabla.getColumnName(j));
-                    }
-
-                    // Llenar las filas con los datos de la tabla
-                    for (int rowIndex = 0; rowIndex < tabla.getRowCount(); rowIndex++) {
-                        Row row = sheet.createRow(rowIndex + 1); // Empezamos en la fila 1 porque la fila 0 es para los
-                                                                 // encabezados
-                        for (int colIndex = 0; colIndex < tabla.getColumnCount(); colIndex++) {
-                            // Crear la celda para cada dato de la fila
-                            Cell cell = row.createCell(colIndex);
-                            // Establecer el valor de la celda
-                            cell.setCellValue(tabla.getValueAt(rowIndex, colIndex).toString());
-                        }
+                        cell = row.createCell(j);
+                        cell.setCellValue(tabla.getValueAt(i, j).toString());
                     }
                 }
 
-                // Guardar el archivo Excel
-                FileOutputStream fileOut = new FileOutputStream("tablas.xlsx");
-                workbook.write(fileOut);
-                fileOut.close();
-                workbook.close();
-
-                JOptionPane.showMessageDialog(null, "Archivo Excel generado exitosamente.");
-            } catch (Exception e) {
-                JOptionPane.showMessageDialog(null, "Error al generar el archivo Excel: " + e.getMessage());
+                // Añadir un salto de línea entre tablas (agregar una fila vacía)
+                sheet.createRow(rowIndex++);
             }
         } else {
             JOptionPane.showMessageDialog(null, "No hay datos para exportar.");
         }
+
+        // Guardar el archivo Excel
+        try (FileOutputStream fileOut = new FileOutputStream("informe.xlsx")) {
+            workbook.write(fileOut);
+        }
+
+        // Cerrar el workbook
+        workbook.close();
+
+        // Mensaje al finalizar la operación con éxito
+        JOptionPane.showMessageDialog(null, "Excel generado exitosamente.");
+    }
+
+    // Método para convertir la imagen de iText a BufferedImage
+    private BufferedImage convertirABufferedImage(com.itextpdf.text.Image iTextImage) {
+        try {
+            // Convertir la imagen iText en bytes
+            ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(iTextImage.getOriginalData());
+
+            // Leer los bytes de la imagen y convertirlos en BufferedImage
+            return ImageIO.read(byteArrayInputStream);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    // Método para convertir BufferedImage a array de bytes
+    private byte[] imageToByteArray(BufferedImage bufferedImage) throws IOException {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        ImageIO.write(bufferedImage, "PNG", byteArrayOutputStream);
+        return byteArrayOutputStream.toByteArray();
     }
 
     public List<JTable> aplicarFiltros() {

@@ -2,3 +2,4 @@ com\example\Main.class
 com\example\DatabaseConnection.class
 com\example\GraficosController.class
 com\example\MainController.class
+com\example\Imagenes.class
