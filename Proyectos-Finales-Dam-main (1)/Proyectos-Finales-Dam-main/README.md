@@ -26,3 +26,6 @@ Este proyecto es una aplicación Java que permite generar informes en formato PD
 ```bash
 git clone https://github.com/GonzaloVegaRamos/Proyectos-Finales-Dam.git
 cd Proyectos-Finales-Dam
+```
+### 2. Ejecuta la aplicación
+Una vez dentro del proyecto, dirigete a la carpeta \interfaces\release\interfaces\ 
