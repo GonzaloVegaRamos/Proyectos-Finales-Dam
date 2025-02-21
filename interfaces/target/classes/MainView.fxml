@@ -6,6 +6,7 @@
 <?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.TitledPane?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.Label?>
 
 <?import javafx.scene.layout.HBox?>
 
@@ -13,9 +14,9 @@
     <padding>
         <Insets top="10" right="10" bottom="10" left="10"/>
     </padding>
-    
+     <Label text="Tablas" style="-fx-font-size: 20px; -fx-font-weight: bold;" />
 <HBox spacing="10">
-<Button text="✓" onAction="#mostrarProductos"/>
+<Button text="✓" onAction="#marcarCheckBoxes" id="botonProductos"/>
     <TitledPane text="Productos" collapsible="true" expanded="false">
         <VBox fx:id="productosVBox" spacing="5">
             <CheckBox text="id_producto" />
@@ -29,7 +30,7 @@
 
 
 <HBox spacing="10">
-<Button text="✓" onAction="#mostrarEmpleados" />
+<Button text="✓" onAction="#marcarCheckBoxes" id="botonEmpleados" />
 <TitledPane text="Empleados" collapsible="true" expanded="false">
     <VBox fx:id="empleadosVBox" spacing="5">
         <CheckBox text="id_empleado" />
@@ -42,7 +43,7 @@
 
 
 <HBox spacing="10">
-<Button text="✓" onAction="#mostrarVentas"/>
+<Button text="✓" onAction="#marcarCheckBoxes" id="botonVentas"/>
 <TitledPane text="Ventas" collapsible="true" expanded="false">
     <VBox fx:id="ventasVBox" spacing="5">
         <CheckBox text="id_venta" />
@@ -56,7 +57,16 @@
 </HBox>
     
     <HBox spacing="10">
-        <Button text="Aplicar Filtros" />
+<VBox>
+    <Label text="Gráficos" style="-fx-font-size: 20px; -fx-font-weight: bold;" />
+    
+    <CheckBox text="Venta por producto" fx:id="Gproducto" />
+    <CheckBox text="Venta por empleado" fx:id="Gempleado"/>
+</VBox>
+    </HBox>
+
+        <HBox spacing="10">
+        <Button text="Sacar Excel" onAction="#sacarExcel"/>
         <Button text="Sacar PDF" onAction="#sacarPDF" />
     </HBox>
     

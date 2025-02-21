@@ -1,5 +1,6 @@
 package com.example;
 
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -11,8 +12,16 @@ import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.jfree.chart.JFreeChart;
+
 import com.itextpdf.text.Document;
 import com.itextpdf.text.DocumentException;
+import com.itextpdf.text.Image;
 import com.itextpdf.text.Paragraph;
 import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
@@ -20,6 +29,7 @@ import com.itextpdf.text.pdf.PdfWriter;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
+import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.VBox;
@@ -27,100 +37,196 @@ import javafx.scene.layout.VBox;
 public class MainController {
 
     @FXML
+    private TextArea resultadoArea;
+
+    public DatabaseConnection dbConnection;
+
+    public GraficosController graficos;
+
+    public MainController() {
+        dbConnection = new DatabaseConnection();
+        graficos = new GraficosController();
+    }
+
+    @FXML
     private VBox productosVBox;
-    
+
     @FXML
     private VBox empleadosVBox;
-    
+
     @FXML
     private VBox ventasVBox;
-    
 
-    
-    
-    private JTable aplicarFiltros() {
+    @FXML
+    private CheckBox Gproducto;
+
+    @FXML
+    private CheckBox Gempleado;
+
+    @FXML
+    public void sacarPDF(ActionEvent event) throws SQLException, DocumentException, FileNotFoundException {
+        Document document = new Document();
+        PdfWriter writer = null;
+
+        try {
+            // Crear archivo PDF y asociarlo al documento
+            writer = PdfWriter.getInstance(document, new FileOutputStream("tabla.pdf"));
+            document.open(); // Abrir documento para escribir
+
+            if (Gproducto.isSelected()) {
+                JFreeChart graficoProductos = graficos.crearGraficoVentasPorProducto();
+                Image chartProductos = graficos.crearImagenDesdeGrafico(graficoProductos);
+                System.out.println("Imagen generada con éxito. Tamaño: " +
+                        chartProductos.getWidth() + "x" + chartProductos.getHeight());
+                chartProductos.scaleToFit(500, 300);
+                document.add(chartProductos);
+            } else if (Gempleado.isSelected()) {
+                JFreeChart graficoVentas = graficos.crearGraficoVentasPorEmpleado();
+                Image chartEmpleados = graficos.crearImagenDesdeGrafico(graficoVentas);
+                System.out.println("Imagen generada con éxito. Tamaño: " +
+                        chartEmpleados.getWidth() + "x" + chartEmpleados.getHeight());
+                chartEmpleados.scaleToFit(500, 300);
+                document.add(chartEmpleados);
+            }
+
+            // Obtener las tablas generadas
+            List<JTable> tablas = aplicarFiltros();
+            if (tablas != null && !tablas.isEmpty()) {
+                // Iterar sobre cada JTable en la lista
+                for (JTable tabla : tablas) {
+                    // Crear una PdfPTable con el número de columnas de la JTable
+                    PdfPTable pdfTable = new PdfPTable(tabla.getColumnCount());
+
+                    // Agregar los encabezados de columna
+                    for (int i = 0; i < tabla.getColumnCount(); i++) {
+                        pdfTable.addCell(tabla.getColumnName(i));
+                    }
+
+                    // Agregar las filas de datos
+                    for (int i = 0; i < tabla.getRowCount(); i++) {
+                        for (int j = 0; j < tabla.getColumnCount(); j++) {
+                            pdfTable.addCell(tabla.getValueAt(i, j).toString());
+                        }
+                    }
+
+                    // Agregar la tabla al documento
+                    document.add(pdfTable);
+                    // Añadir una nueva línea entre tablas para separarlas
+                    document.add(new Paragraph("\n"));
+                }
+            } else {
+                JOptionPane.showMessageDialog(null, "No hay datos para exportar.");
+            }
+
+        } catch (Exception e) {
+            // Mostrar el mensaje de error
+            JOptionPane.showMessageDialog(null, "Error al generar el PDF: " + e.getMessage());
+            e.printStackTrace(); // Imprimir el stack trace para depurar
+        } finally {
+            // Asegúrate de que el documento se cierra en caso de error o éxito
+            if (document.isOpen()) {
+                document.close();
+            }
+            if (writer != null) {
+                writer.close();
+            }
+        }
+
+        // Mensaje al finalizar la operación con éxito
+        JOptionPane.showMessageDialog(null, "PDF generado exitosamente.");
+    }
+
+    public void sacarExcel(ActionEvent event) {
+        List<JTable> tablas = aplicarFiltros(); // Obtener las tablas generadas
+        if (tablas != null && !tablas.isEmpty()) {
+            try {
+                // Crear un libro de trabajo Excel
+                Workbook workbook = new XSSFWorkbook();
+
+                // Iterar sobre cada JTable en la lista
+                for (int i = 0; i < tablas.size(); i++) {
+                    JTable tabla = tablas.get(i);
+
+                    // Crear una hoja para cada JTable
+                    Sheet sheet = workbook.createSheet("Tabla " + (i + 1));
+
+                    // Crear una fila para los encabezados de columna
+                    Row headerRow = sheet.createRow(0);
+                    for (int j = 0; j < tabla.getColumnCount(); j++) {
+                        // Crear la celda para el encabezado
+                        Cell cell = headerRow.createCell(j);
+                        cell.setCellValue(tabla.getColumnName(j));
+                    }
+
+                    // Llenar las filas con los datos de la tabla
+                    for (int rowIndex = 0; rowIndex < tabla.getRowCount(); rowIndex++) {
+                        Row row = sheet.createRow(rowIndex + 1); // Empezamos en la fila 1 porque la fila 0 es para los
+                                                                 // encabezados
+                        for (int colIndex = 0; colIndex < tabla.getColumnCount(); colIndex++) {
+                            // Crear la celda para cada dato de la fila
+                            Cell cell = row.createCell(colIndex);
+                            // Establecer el valor de la celda
+                            cell.setCellValue(tabla.getValueAt(rowIndex, colIndex).toString());
+                        }
+                    }
+                }
+
+                // Guardar el archivo Excel
+                FileOutputStream fileOut = new FileOutputStream("tablas.xlsx");
+                workbook.write(fileOut);
+                fileOut.close();
+                workbook.close();
+
+                JOptionPane.showMessageDialog(null, "Archivo Excel generado exitosamente.");
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(null, "Error al generar el archivo Excel: " + e.getMessage());
+            }
+        } else {
+            JOptionPane.showMessageDialog(null, "No hay datos para exportar.");
+        }
+    }
+
+    public List<JTable> aplicarFiltros() {
         // Obtener los filtros seleccionados de cada VBox
         List<String> productosSeleccionados = getSelectedCheckBoxes(productosVBox);
         List<String> empleadosSeleccionados = getSelectedCheckBoxes(empleadosVBox);
         List<String> ventasSeleccionados = getSelectedCheckBoxes(ventasVBox);
-    
-        // Contar cuántos VBox tienen checkboxes seleccionados
-        int vboxSeleccionados = 0;
-        if (!productosSeleccionados.isEmpty()) vboxSeleccionados++;
-        if (!empleadosSeleccionados.isEmpty()) vboxSeleccionados++;
-        if (!ventasSeleccionados.isEmpty()) vboxSeleccionados++;
 
-                // Validación: solo un VBox puede tener checkboxes seleccionados
-                if (vboxSeleccionados > 1) {
-                    resultadoArea.setText("Error: Solo puedes seleccionar filtros de una categoría a la vez.");
-                    
-                }
+        resultadoArea.setText("Filtros Productos: " + String.join(", ", productosSeleccionados));
+        resultadoArea.setText("Filtros Empleados: " + String.join(", ", empleadosSeleccionados));
+        resultadoArea.setText("Filtros Ventas: " + String.join(", ", ventasSeleccionados));
 
-        String vboxSelecionado="";
-        if (!ventasSeleccionados.isEmpty()) {
-            vboxSelecionado ="Ventas";
+        String sql = "";
+        List<JTable> tablasGeneradas = new ArrayList<>();
+
+        if (!productosSeleccionados.isEmpty()) {
+            sql = "SELECT " + String.join(", ", productosSeleccionados) + " FROM Productos";
+            tablasGeneradas.add(mostrarDatos(sql));
         }
         if (!empleadosSeleccionados.isEmpty()) {
-            vboxSelecionado ="Empleados";
+            sql = "SELECT " + String.join(", ", empleadosSeleccionados) + " FROM Empleados";
+            tablasGeneradas.add(mostrarDatos(sql));
         }
-        if (!productosSeleccionados.isEmpty()) {
-            vboxSelecionado ="Productos";
+        if (!ventasSeleccionados.isEmpty()) {
+            sql = "SELECT " + String.join(", ", ventasSeleccionados) + " FROM Ventas";
+            JTable tablaVentas = mostrarDatos(sql);
+            tablasGeneradas.add(tablaVentas);
         }
-
-        // Mostrar el resultado si solo un VBox tiene checkboxes seleccionados
-        List<String> filtrosSeleccionados = new ArrayList<>();
-        filtrosSeleccionados.addAll(productosSeleccionados);
-        filtrosSeleccionados.addAll(empleadosSeleccionados);
-        filtrosSeleccionados.addAll(ventasSeleccionados);
-        System.out.println(filtrosSeleccionados);
-    
-        if (filtrosSeleccionados.isEmpty()) {
-            resultadoArea.setText("No se ha seleccionado ningún filtro.");
-        } else {
-            resultadoArea.setText("Filtros aplicados: " + String.join(", ", filtrosSeleccionados));
-        }
-
-        String columnas = String.join(", ", filtrosSeleccionados);
-
-        
-        String sql="";
-            switch (vboxSelecionado) {
-                case "Ventas":
-                sql = "SELECT " + columnas + " FROM Ventas";
-                    break;
-
-                case "Empleados":
-                sql = "SELECT " + columnas + " FROM Empleados";
-                    break;
-
-                case "Productos":
-                sql = "SELECT " + columnas + " FROM Productos";
-                break;
-
-                default:
-                    System.out.println("Filtro no reconocido.");
-                    break;
-                }
-
-                JTable table = mostrarDatos(sql);
-   
-                return table;
+        return tablasGeneradas;
     }
-    
+
     // Método para obtener los checkboxes seleccionados dentro de un VBox
     private List<String> getSelectedCheckBoxes(VBox vbox) {
         List<String> selected = new ArrayList<>();
-        
+
         for (Node node : vbox.getChildren()) {
             if (node instanceof CheckBox checkBox && checkBox.isSelected()) {
                 selected.add(checkBox.getText());
             }
         }
-        
+
         return selected;
     }
-
-
 
     public JTable mostrarDatos(String sql) {
         JTable table = null; // Inicializar la tabla
@@ -155,172 +261,50 @@ public class MainController {
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(null, "Error al ejecutar la consulta: " + e.getMessage());
         }
-        
 
-        return table; 
-    }
-
-public void sacarPDF(ActionEvent event) {
-    JTable tabla = aplicarFiltros(); // Obtener la JTable generada
-    if (tabla != null) {
-        try {
-            Document document = new Document();
-            PdfWriter.getInstance(document, new FileOutputStream("tabla.pdf"));
-            document.open();
-
-            PdfPTable pdfTable = new PdfPTable(tabla.getColumnCount());
-
-            // Agregar los encabezados de columna
-            for (int i = 0; i < tabla.getColumnCount(); i++) {
-                pdfTable.addCell(tabla.getColumnName(i));
-            }
-
-            // Agregar las filas de datos
-            for (int i = 0; i < tabla.getRowCount(); i++) {
-                for (int j = 0; j < tabla.getColumnCount(); j++) {
-                    pdfTable.addCell(tabla.getValueAt(i, j).toString());
-                }
-            }
-
-            document.add(pdfTable);
-            document.close();
-            JOptionPane.showMessageDialog(null, "PDF generado exitosamente.");
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(null, "Error al generar el PDF: " + e.getMessage());
-        }
-    } else {
-        JOptionPane.showMessageDialog(null, "No hay datos para exportar.");
-    }
-}
-
-
-
-
-
-
-    
-    
-
-
-
-    @FXML
-    private TextArea resultadoArea;
-
-    private DatabaseConnection dbConnection;
-
-    public MainController() {
-        dbConnection = new DatabaseConnection();
+        return table;
     }
 
     @FXML
-    private void mostrarProductos() {
-        String sql = "SELECT * FROM Productos";
-        mostrarTodosDatos(sql);
-    }
+    private void marcarCheckBoxes(ActionEvent event) {
+        // Obtenemos el botón que fue presionado
+        Button boton = (Button) event.getSource();
 
-    @FXML
-    private void mostrarEmpleados() {
-        String sql = "SELECT * FROM Empleados";
-        mostrarTodosDatos(sql);
-    }
-
-    @FXML
-    private void mostrarVentas() {
-        String sql = "SELECT * FROM Ventas";
-        mostrarTodosDatos(sql);
-    }
-
-   @FXML
-    private void sacarpdf() {
-        // Obtener el contenido del TextArea
-        String contenido = resultadoArea.getText();
-
-        // Verificar si hay contenido para guardar
-        if (contenido.isEmpty()) {
-            resultadoArea.setText("No hay datos para guardar en el PDF.");
-            return;
-        }
-
-        // Crear un nuevo documento PDF
-        Document document = new Document();
-
-        try {
-            // Especificar la ruta y el nombre del archivo PDF
-            PdfWriter.getInstance(document, new FileOutputStream("Reporte.pdf"));
-
-            // Abrir el documento
-            document.open();
-
-            // Agregar el contenido del TextArea al PDF
-            document.add(new Paragraph(contenido));
-
-            // Cerrar el documento
-            document.close();
-            System.out.println("PDF generado exitosamente: Reporte.pdf");
-
-        } catch (DocumentException e) {
-            resultadoArea.setText("Error al generar el PDF: " + e.getMessage());
-        } catch (Exception e) {
-            resultadoArea.setText("Error inesperado: " + e.getMessage());
+        // Dependiendo del id del botón, marcamos los checkboxes correspondientes
+        if ("botonProductos".equals(boton.getId())) {
+            marcarCheckBoxesEnVBox(productosVBox); // Marcar checkboxes de productos
+        } else if ("botonEmpleados".equals(boton.getId())) {
+            marcarCheckBoxesEnVBox(empleadosVBox); // Marcar checkboxes de empleados
+        } else if ("botonVentas".equals(boton.getId())) {
+            marcarCheckBoxesEnVBox(ventasVBox);
         }
     }
 
+    public void marcarCheckBoxesEnVBox(VBox vbox) {
+        boolean todos = true;
 
-
-    private void mostrarTodosDatos(String sql) {
-        resultadoArea.clear(); 
-
-        try {
-            ResultSet resultSet = dbConnection.executeQuery(sql);
-
-            StringBuilder resultado = new StringBuilder();
-
-            if (sql.contains("Productos")) {
-                resultado.append(String.format("%-5s %-20s %-10s %-10s%n", "ID", "Nombre", "Precio", "Stock"));
-                resultado.append("---------------------------------------------------\n");
-                
-                while (resultSet.next()) { // Iteramos sobre todos los resultados
-                    int id = resultSet.getInt("id_producto");
-                    String nombre = resultSet.getString("nombre");
-                    double precio = resultSet.getDouble("precio");
-                    int stock = resultSet.getInt("stock");
-
-                    resultado.append(String.format("%-5d %-20s %-10.2f %-10d%n", id, nombre, precio, stock));
-                }
-            } else if (sql.contains("Empleados")) {
-                resultado.append(String.format("%-5s %-20s %-15s %-15s%n", "ID", "Nombre", "Cargo", "Fecha Contratación"));
-                resultado.append("---------------------------------------------------------------\n");
-
-                while (resultSet.next()) {
-                    int id = resultSet.getInt("id_empleado");
-                    String nombre = resultSet.getString("nombre");
-                    String cargo = resultSet.getString("cargo");
-                    String fechaContratacion = resultSet.getString("fecha_contratacion");
-
-                    resultado.append(String.format("%-5d %-20s %-15s %-15s%n", id, nombre, cargo, fechaContratacion));
-                }
-            } else if (sql.contains("Ventas")) {
-                resultado.append(String.format("%-5s %-10s %-10s %-10s %-15s %-10s%n", 
-                    "ID", "ID Emp", "ID Prod", "Cantidad", "Fecha Venta", "Total"));
-                resultado.append("------------------------------------------------------------------\n");
-
-                while (resultSet.next()) {
-                    int id = resultSet.getInt("id_venta");
-                    int idEmpleado = resultSet.getInt("id_empleado");
-                    int idProducto = resultSet.getInt("id_producto");
-                    int cantidad = resultSet.getInt("cantidad");
-                    String fechaVenta = resultSet.getString("fecha_venta");
-                    double totalVenta = resultSet.getDouble("total_venta");
-
-                    resultado.append(String.format("%-8d %-15d %-15d %-11d %-15s %10.2f%n", 
-                        id, idEmpleado, idProducto, cantidad, fechaVenta, totalVenta));
+        // Verificamos si todos los checkboxes están marcados
+        for (var node : vbox.getChildren()) {
+            if (node instanceof CheckBox) {
+                CheckBox checkBox = (CheckBox) node;
+                if (!checkBox.isSelected()) {
+                    todos = false; // Si al menos uno no está marcado, cambiamos a false
                 }
             }
+        }
 
-            resultadoArea.setText(resultado.toString()); 
-            dbConnection.closeResultSet(resultSet); 
-        } catch (SQLException e) {
-            resultadoArea.setText("Error al ejecutar la consulta: " + e.getMessage());
+        // Si todos están marcados, desmarcamos todos; si no, marcamos todos
+        for (var node : vbox.getChildren()) {
+            if (node instanceof CheckBox) {
+                CheckBox checkBox = (CheckBox) node;
+                if (todos) {
+                    // Si todos están marcados, desmarcamos
+                    checkBox.setSelected(false);
+                } else {
+                    // Si al menos uno está desmarcado, marcamos todos
+                    checkBox.setSelected(true);
+                }
+            }
         }
     }
 

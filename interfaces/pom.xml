@@ -41,6 +41,73 @@
     <version>5.5.13.3</version> <!-- Versión estable -->
 </dependency>
 
+
+
+
+<dependency>
+        <groupId>org.junit.jupiter</groupId>
+        <artifactId>junit-jupiter-api</artifactId>
+        <version>5.7.0</version>
+        <scope>test</scope>
+    </dependency>
+    <dependency>
+        <groupId>org.junit.jupiter</groupId>
+        <artifactId>junit-jupiter-engine</artifactId>
+        <version>5.7.0</version>
+        <scope>test</scope>
+    </dependency>
+
+    <!-- Dependencia para Mockito -->
+    <dependency>
+        <groupId>org.mockito</groupId>
+        <artifactId>mockito-core</artifactId>
+        <version>3.9.0</version>
+        <scope>test</scope>
+    </dependency>
+
+
+    <!-- Dependencia para Apache POI -->
+    <dependency>
+        <groupId>org.apache.poi</groupId>
+        <artifactId>poi-ooxml</artifactId>
+        <version>5.2.3</version> <!-- Puedes cambiar la versión a la más reciente -->
+    </dependency>
+
+    <!-- Dependencia para Apache POI (core) -->
+    <dependency>
+        <groupId>org.apache.poi</groupId>
+        <artifactId>poi</artifactId>
+        <version>5.2.3</version> <!-- Asegúrate de que la versión coincida con la de poi-ooxml -->
+    </dependency>
+
+    <!-- Dependencia para Apache POI (para manejo de XLS, si lo necesitas) -->
+    <dependency>
+        <groupId>org.apache.poi</groupId>
+        <artifactId>poi-ooxml-schemas</artifactId>
+        <version>4.1.2</version> <!-- También puedes ajustar la versión aquí -->
+    </dependency>
+
+    <!-- Dependencia para manejo de XML (usada internamente por Apache POI) -->
+    <dependency>
+        <groupId>org.apache.xmlbeans</groupId>
+        <artifactId>xmlbeans</artifactId>
+        <version>5.1.1</version> <!-- Es importante para compatibilidad de POI -->
+    </dependency>
+
+
+    <!-- JFreeChart para gráficos -->
+    <dependency>
+        <groupId>org.jfree</groupId>
+        <artifactId>jfreechart</artifactId>
+        <version>1.5.3</version>
+    </dependency>
+
+
+
+
+
+
+
     </dependencies>
 
 
