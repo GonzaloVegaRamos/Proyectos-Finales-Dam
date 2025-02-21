@@ -64,19 +64,19 @@ public class MainController {
     }
 
     @FXML
-    private CheckBox Gproducto;
+    public CheckBox Gproducto;
 
     @FXML
-    private CheckBox Gempleado;
+    public CheckBox Gempleado;
 
     @FXML
-    private VBox productosVBox;
+    public VBox productosVBox;
 
     @FXML
-    private VBox empleadosVBox;
+    public VBox empleadosVBox;
 
     @FXML
-    private VBox ventasVBox;
+    public VBox ventasVBox;
 
     @FXML
     public void sacarPDF(ActionEvent event) throws SQLException, DocumentException, FileNotFoundException {

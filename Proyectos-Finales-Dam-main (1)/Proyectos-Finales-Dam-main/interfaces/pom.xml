@@ -41,6 +41,20 @@
     <version>5.5.13.3</version> <!-- Versión estable -->
 </dependency>
 
+<dependency>
+    <groupId>org.hamcrest</groupId>
+    <artifactId>hamcrest</artifactId>
+    <version>2.2</version>  <!-- O la versión que estés usando -->
+    <scope>test</scope> <!-- Solo para pruebas unitarias -->
+</dependency>
+
+<dependency>
+    <groupId>org.testfx</groupId>
+    <artifactId>testfx-junit5</artifactId>
+    <version>4.0.16-alpha</version>
+    <scope>test</scope>
+</dependency>
+
 
 
 

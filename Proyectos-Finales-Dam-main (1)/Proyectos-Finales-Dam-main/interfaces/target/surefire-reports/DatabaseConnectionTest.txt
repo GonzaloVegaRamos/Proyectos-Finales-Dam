@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
-Test set: MainControllerTest
+Test set: DatabaseConnectionTest
 -------------------------------------------------------------------------------
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 16.44 s -- in MainControllerTest
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.183 s -- in DatabaseConnectionTest
