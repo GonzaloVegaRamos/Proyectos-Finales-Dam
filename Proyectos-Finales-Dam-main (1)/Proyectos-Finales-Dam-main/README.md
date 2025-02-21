@@ -24,5 +24,5 @@ Este proyecto es una aplicación Java que permite generar informes en formato PD
 ### 1. Clonar el repositorio
 
 ```bash
-git clone https://github.com/tu-usuario/tu-repositorio.git
-cd tu-repositorio
+git clone https://github.com/GonzaloVegaRamos/Proyectos-Finales-Dam.git
+cd Proyectos-Finales-Dam
