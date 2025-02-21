@@ -14,11 +14,24 @@ import org.jfree.data.category.DefaultCategoryDataset;
 
 import com.itextpdf.text.Image;
 
+import javafx.fxml.FXML;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.TextArea;
+
 // Asegúrate de importar de java.awt.Dimension
 
 public class GraficosController {
 
     public DatabaseConnection dbConnection;
+
+    @FXML
+    private TextArea resultadoArea;
+
+    @FXML
+    private CheckBox Gproducto;
+
+    @FXML
+    private CheckBox Gempleado;
 
     public GraficosController() {
         // Asegúrate de inicializar la conexión a la base de datos
@@ -98,5 +111,30 @@ public class GraficosController {
                 dataset);
 
         return barChart;
+    }
+
+    @FXML
+    public void initialize() {
+        // Agregar un listener a cada CheckBox
+        Gproducto.selectedProperty().addListener((observable, oldValue, newValue) -> actualizarTexto());
+        Gempleado.selectedProperty().addListener((observable, oldValue, newValue) -> actualizarTexto());
+    }
+
+    private void actualizarTexto() {
+        StringBuilder texto = new StringBuilder();
+
+        // Si "Venta por producto" está marcado, mostrar la imagen correspondiente
+        if (Gproducto.isSelected()) {
+            texto.append("Ruta de la imagen de Producto: C:/ruta/a/imagen_producto.jpg\n");
+        }
+
+        // Si "Venta por empleado" está marcado, mostrar la imagen correspondiente
+        if (Gempleado.isSelected()) {
+            texto.append("Ruta de la imagen de Empleado: C:/ruta/a/imagen_empleado.jpg\n");
+        }
+
+        // Actualizar el TextArea con el texto
+
+        resultadoArea.setText(texto.toString());
     }
 }

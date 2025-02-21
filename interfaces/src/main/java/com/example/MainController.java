@@ -27,12 +27,20 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.jfree.chart.JFreeChart;
 
+import com.itextpdf.text.BaseColor;
+import com.itextpdf.text.Chunk;
 import com.itextpdf.text.Document;
 import com.itextpdf.text.DocumentException;
+import com.itextpdf.text.Element;
+import com.itextpdf.text.Font;
+import com.itextpdf.text.FontFactory;
 import com.itextpdf.text.Image;
 import com.itextpdf.text.Paragraph;
+import com.itextpdf.text.Phrase;
+import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
+import com.itextpdf.text.pdf.draw.LineSeparator;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -44,9 +52,6 @@ import javafx.scene.layout.VBox;
 
 public class MainController {
 
-    @FXML
-    private TextArea resultadoArea;
-
     public DatabaseConnection dbConnection;
 
     public GraficosController graficos;
@@ -54,7 +59,14 @@ public class MainController {
     public MainController() {
         dbConnection = new DatabaseConnection();
         graficos = new GraficosController();
+
     }
+
+    @FXML
+    private CheckBox Gproducto;
+
+    @FXML
+    private CheckBox Gempleado;
 
     @FXML
     private VBox productosVBox;
@@ -66,12 +78,6 @@ public class MainController {
     private VBox ventasVBox;
 
     @FXML
-    private CheckBox Gproducto;
-
-    @FXML
-    private CheckBox Gempleado;
-
-    @FXML
     public void sacarPDF(ActionEvent event) throws SQLException, DocumentException, FileNotFoundException {
         Document document = new Document();
         PdfWriter writer = null;
@@ -81,20 +87,50 @@ public class MainController {
             writer = PdfWriter.getInstance(document, new FileOutputStream("tabla.pdf"));
             document.open(); // Abrir documento para escribir
 
+            // Título del documento
+            Paragraph tituloReporte = new Paragraph("Reporte del Mes",
+                    FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18));
+            tituloReporte.setAlignment(Element.ALIGN_CENTER);
+            document.add(tituloReporte);
+
+            // Añadir una línea separadora después del título
+            document.add(new Chunk("\n"));
+            document.add(new LineSeparator());
+            document.add(new Chunk("\n"));
+
+            // Gráficas
             if (Gproducto.isSelected()) {
+                // Título para gráfico de productos
+                Paragraph tituloGraficoProductos = new Paragraph("Gráfico de Ventas por Producto",
+                        FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14));
+                tituloGraficoProductos.setAlignment(Element.ALIGN_LEFT);
+                document.add(tituloGraficoProductos);
+                document.add(new Chunk("\n"));
+
                 JFreeChart graficoProductos = graficos.crearGraficoVentasPorProducto();
                 Image chartProductos = graficos.crearImagenDesdeGrafico(graficoProductos);
                 System.out.println("Imagen generada con éxito. Tamaño: " +
                         chartProductos.getWidth() + "x" + chartProductos.getHeight());
                 chartProductos.scaleToFit(500, 300);
                 document.add(chartProductos);
-            } else if (Gempleado.isSelected()) {
+                document.add(new Chunk("\n"));
+            }
+
+            if (Gempleado.isSelected()) {
+                // Título para gráfico de empleados
+                Paragraph tituloGraficoEmpleados = new Paragraph("Gráfico de Ventas por Empleado",
+                        FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14));
+                tituloGraficoEmpleados.setAlignment(Element.ALIGN_LEFT);
+                document.add(tituloGraficoEmpleados);
+                document.add(new Chunk("\n"));
+
                 JFreeChart graficoVentas = graficos.crearGraficoVentasPorEmpleado();
                 Image chartEmpleados = graficos.crearImagenDesdeGrafico(graficoVentas);
                 System.out.println("Imagen generada con éxito. Tamaño: " +
                         chartEmpleados.getWidth() + "x" + chartEmpleados.getHeight());
                 chartEmpleados.scaleToFit(500, 300);
                 document.add(chartEmpleados);
+                document.add(new Chunk("\n"));
             }
 
             // Obtener las tablas generadas
@@ -102,25 +138,43 @@ public class MainController {
             if (tablas != null && !tablas.isEmpty()) {
                 // Iterar sobre cada JTable en la lista
                 for (JTable tabla : tablas) {
+
+                    // Título de la tabla
+                    Paragraph tituloTabla = new Paragraph("Datos de la Tabla",
+                            FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14));
+                    tituloTabla.setAlignment(Element.ALIGN_LEFT);
+                    document.add(tituloTabla);
+                    document.add(new Chunk("\n"));
+
                     // Crear una PdfPTable con el número de columnas de la JTable
                     PdfPTable pdfTable = new PdfPTable(tabla.getColumnCount());
+                    pdfTable.setWidthPercentage(100); // Ocupa todo el ancho de la página
 
-                    // Agregar los encabezados de columna
+                    // Agregar los encabezados de columna con estilo
+                    Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD);
                     for (int i = 0; i < tabla.getColumnCount(); i++) {
-                        pdfTable.addCell(tabla.getColumnName(i));
+                        PdfPCell cell = new PdfPCell(new Phrase(tabla.getColumnName(i), headerFont));
+                        cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                        cell.setBackgroundColor(BaseColor.LIGHT_GRAY); // Fondo gris para los encabezados
+                        pdfTable.addCell(cell);
                     }
 
                     // Agregar las filas de datos
                     for (int i = 0; i < tabla.getRowCount(); i++) {
                         for (int j = 0; j < tabla.getColumnCount(); j++) {
-                            pdfTable.addCell(tabla.getValueAt(i, j).toString());
+                            PdfPCell cell = new PdfPCell(new Phrase(tabla.getValueAt(i, j).toString()));
+                            cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                            pdfTable.addCell(cell);
                         }
                     }
 
                     // Agregar la tabla al documento
                     document.add(pdfTable);
-                    // Añadir una nueva línea entre tablas para separarlas
-                    document.add(new Paragraph("\n"));
+
+                    // Añadir una línea separadora después de cada tabla
+                    document.add(new Chunk("\n"));
+                    document.add(new LineSeparator());
+                    document.add(new Chunk("\n"));
                 }
             } else {
                 JOptionPane.showMessageDialog(null, "No hay datos para exportar.");
@@ -261,6 +315,52 @@ public class MainController {
         return byteArrayOutputStream.toByteArray();
     }
 
+    @FXML
+    private void marcarCheckBoxes(ActionEvent event) {
+        // Obtenemos el botón que fue presionado
+        Button boton = (Button) event.getSource();
+
+        // Dependiendo del id del botón, marcamos los checkboxes correspondientes
+        if ("botonProductos".equals(boton.getId())) {
+            marcarCheckBoxesEnVBox(productosVBox); // Marcar checkboxes de productos
+        } else if ("botonEmpleados".equals(boton.getId())) {
+            marcarCheckBoxesEnVBox(empleadosVBox); // Marcar checkboxes de empleados
+        } else if ("botonVentas".equals(boton.getId())) {
+            marcarCheckBoxesEnVBox(ventasVBox);
+        }
+    }
+
+    public void marcarCheckBoxesEnVBox(VBox vbox) {
+        boolean todos = true;
+
+        // Verificamos si todos los checkboxes están marcados
+        for (var node : vbox.getChildren()) {
+            if (node instanceof CheckBox) {
+                CheckBox checkBox = (CheckBox) node;
+                if (!checkBox.isSelected()) {
+                    todos = false; // Si al menos uno no está marcado, cambiamos a false
+                }
+            }
+        }
+
+        // Si todos están marcados, desmarcamos todos; si no, marcamos todos
+        for (var node : vbox.getChildren()) {
+            if (node instanceof CheckBox) {
+                CheckBox checkBox = (CheckBox) node;
+                if (todos) {
+                    // Si todos están marcados, desmarcamos
+                    checkBox.setSelected(false);
+                } else {
+                    // Si al menos uno está desmarcado, marcamos todos
+                    checkBox.setSelected(true);
+                }
+            }
+        }
+    }
+
+    @FXML
+    private TextArea resultadoArea;
+
     public List<JTable> aplicarFiltros() {
         // Obtener los filtros seleccionados de cada VBox
         List<String> productosSeleccionados = getSelectedCheckBoxes(productosVBox);
@@ -338,49 +438,6 @@ public class MainController {
         }
 
         return table;
-    }
-
-    @FXML
-    private void marcarCheckBoxes(ActionEvent event) {
-        // Obtenemos el botón que fue presionado
-        Button boton = (Button) event.getSource();
-
-        // Dependiendo del id del botón, marcamos los checkboxes correspondientes
-        if ("botonProductos".equals(boton.getId())) {
-            marcarCheckBoxesEnVBox(productosVBox); // Marcar checkboxes de productos
-        } else if ("botonEmpleados".equals(boton.getId())) {
-            marcarCheckBoxesEnVBox(empleadosVBox); // Marcar checkboxes de empleados
-        } else if ("botonVentas".equals(boton.getId())) {
-            marcarCheckBoxesEnVBox(ventasVBox);
-        }
-    }
-
-    public void marcarCheckBoxesEnVBox(VBox vbox) {
-        boolean todos = true;
-
-        // Verificamos si todos los checkboxes están marcados
-        for (var node : vbox.getChildren()) {
-            if (node instanceof CheckBox) {
-                CheckBox checkBox = (CheckBox) node;
-                if (!checkBox.isSelected()) {
-                    todos = false; // Si al menos uno no está marcado, cambiamos a false
-                }
-            }
-        }
-
-        // Si todos están marcados, desmarcamos todos; si no, marcamos todos
-        for (var node : vbox.getChildren()) {
-            if (node instanceof CheckBox) {
-                CheckBox checkBox = (CheckBox) node;
-                if (todos) {
-                    // Si todos están marcados, desmarcamos
-                    checkBox.setSelected(false);
-                } else {
-                    // Si al menos uno está desmarcado, marcamos todos
-                    checkBox.setSelected(true);
-                }
-            }
-        }
     }
 
 }
