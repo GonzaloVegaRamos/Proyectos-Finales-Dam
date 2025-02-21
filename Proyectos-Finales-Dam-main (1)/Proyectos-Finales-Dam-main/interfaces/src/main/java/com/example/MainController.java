@@ -252,10 +252,11 @@ public class MainController {
                 int rowIndex = 2; // Fila donde empieza la tabla (después del título)
 
                 // Agregar los encabezados de columna
+                // Agregar los encabezados de columna (todos en una sola fila)
+                Row headerRow = sheet.createRow(rowIndex++);
                 for (int i = 0; i < tabla.getTabla().getColumnCount(); i++) {
-                    row = sheet.createRow(rowIndex++);
-                    cell = row.createCell(i);
-                    cell.setCellValue(tabla.getTabla().getColumnName(i));
+                    Cell headerCell = headerRow.createCell(i);
+                    headerCell.setCellValue(tabla.getTabla().getColumnName(i));
                 }
 
                 // Agregar las filas de datos
