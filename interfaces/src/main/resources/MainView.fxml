@@ -18,11 +18,11 @@
 <Button text="✓" onAction="#mostrarProductos"/>
     <TitledPane text="Productos" collapsible="true" expanded="false">
         <VBox fx:id="productosVBox" spacing="5">
-            <CheckBox text="ID Producto" />
-            <CheckBox text="Nombre" />
-            <CheckBox text="Categoría" />
-            <CheckBox text="Precio" />
-            <CheckBox text="Stock" />
+            <CheckBox text="id_producto" />
+            <CheckBox text="nombre" />
+            <CheckBox text="categoria" />
+            <CheckBox text="precio" />
+            <CheckBox text="stock" />
         </VBox>
     </TitledPane>
 </HBox>
@@ -32,10 +32,10 @@
 <Button text="✓" onAction="#mostrarEmpleados" />
 <TitledPane text="Empleados" collapsible="true" expanded="false">
     <VBox fx:id="empleadosVBox" spacing="5">
-        <CheckBox text="ID Empleado" />
-        <CheckBox text="Nombre" />
-        <CheckBox text="Cargo" />
-        <CheckBox text="Fecha de Contratación" />
+        <CheckBox text="id_empleado" />
+        <CheckBox text="nombre" />
+        <CheckBox text="cargo" />
+        <CheckBox text="fecha_contratacion" />
     </VBox>
 </TitledPane>
 </HBox>
@@ -45,19 +45,19 @@
 <Button text="✓" onAction="#mostrarVentas"/>
 <TitledPane text="Ventas" collapsible="true" expanded="false">
     <VBox fx:id="ventasVBox" spacing="5">
-        <CheckBox text="ID Venta" />
-        <CheckBox text="ID Empleado" />
-        <CheckBox text="ID Producto" />
-        <CheckBox text="Cantidad" />
-        <CheckBox text="Fecha Venta" />
-        <CheckBox text="Total Venta" />
+        <CheckBox text="id_venta" />
+        <CheckBox text="id_empleado" />
+        <CheckBox text="id_producto" />
+        <CheckBox text="cantidad" />
+        <CheckBox text="fecha_venta" />
+        <CheckBox text="total_venta" />
     </VBox>
 </TitledPane>
 </HBox>
     
     <HBox spacing="10">
-        <Button text="Aplicar Filtros" onAction="#aplicarFiltros" />
-        <Button text="Sacar PDF" onAction="#sacarpdf" />
+        <Button text="Aplicar Filtros" />
+        <Button text="Sacar PDF" onAction="#sacarPDF" />
     </HBox>
     
     <TextArea fx:id="resultadoArea" editable="false" wrapText="true" />

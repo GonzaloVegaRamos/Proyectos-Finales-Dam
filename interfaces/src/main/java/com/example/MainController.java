@@ -2,13 +2,19 @@ package com.example;
 
 import java.io.FileOutputStream;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.JOptionPane;
+import javax.swing.JTable;
+import javax.swing.table.DefaultTableModel;
+
 import com.itextpdf.text.Document;
 import com.itextpdf.text.DocumentException;
 import com.itextpdf.text.Paragraph;
+import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
 
 import javafx.event.ActionEvent;
@@ -31,8 +37,8 @@ public class MainController {
     
 
     
-    @FXML
-    private void aplicarFiltros(ActionEvent event) {
+    
+    private JTable aplicarFiltros() {
         // Obtener los filtros seleccionados de cada VBox
         List<String> productosSeleccionados = getSelectedCheckBoxes(productosVBox);
         List<String> empleadosSeleccionados = getSelectedCheckBoxes(empleadosVBox);
@@ -47,7 +53,7 @@ public class MainController {
                 // Validación: solo un VBox puede tener checkboxes seleccionados
                 if (vboxSeleccionados > 1) {
                     resultadoArea.setText("Error: Solo puedes seleccionar filtros de una categoría a la vez.");
-                    return;
+                    
                 }
 
         String vboxSelecionado="";
@@ -66,6 +72,7 @@ public class MainController {
         filtrosSeleccionados.addAll(productosSeleccionados);
         filtrosSeleccionados.addAll(empleadosSeleccionados);
         filtrosSeleccionados.addAll(ventasSeleccionados);
+        System.out.println(filtrosSeleccionados);
     
         if (filtrosSeleccionados.isEmpty()) {
             resultadoArea.setText("No se ha seleccionado ningún filtro.");
@@ -73,36 +80,31 @@ public class MainController {
             resultadoArea.setText("Filtros aplicados: " + String.join(", ", filtrosSeleccionados));
         }
 
+        String columnas = String.join(", ", filtrosSeleccionados);
+
+        
+        String sql="";
             switch (vboxSelecionado) {
                 case "Ventas":
-                    System.out.println("Filtrando por ID Producto...");
-                   
+                sql = "SELECT " + columnas + " FROM Ventas";
                     break;
-                case "Empleados":
-                    System.out.println("Filtrando por Nombre...");
-                    
-                    break;
-                case "Productos":
 
+                case "Empleados":
+                sql = "SELECT " + columnas + " FROM Empleados";
+                    break;
+
+                case "Productos":
+                sql = "SELECT " + columnas + " FROM Productos";
                 break;
+
                 default:
                     System.out.println("Filtro no reconocido.");
                     break;
                 }
+
+                JTable table = mostrarDatos(sql);
    
-
-        // String sql = "SELECT * FROM Ventas";
-
-        // ResultSet resultSet = dbConnection.executeQuery(sql);
-
-        // StringBuilder resultado = new StringBuilder();
-
-        // while (resultSet.next()) { // Iteramos sobre todos los resultados
-        //     int id = resultSet.getInt("id_producto");
-        //     String nombre = resultSet.getString("nombre");
-        //     double precio = resultSet.getDouble("precio");
-        //     int stock = resultSet.getInt("stock");
-        // }
+                return table;
     }
     
     // Método para obtener los checkboxes seleccionados dentro de un VBox
@@ -117,10 +119,87 @@ public class MainController {
         
         return selected;
     }
-    
-    
 
 
+
+    public JTable mostrarDatos(String sql) {
+        JTable table = null; // Inicializar la tabla
+        try {
+            // Ejecutar consulta
+            ResultSet resultSet = dbConnection.executeQuery(sql);
+
+            // Obtener metadatos de la consulta
+            ResultSetMetaData metaData = resultSet.getMetaData();
+            int columnCount = metaData.getColumnCount(); // Número de columnas
+
+            // Crear modelo de tabla
+            DefaultTableModel model = new DefaultTableModel();
+
+            // Agregar nombres de columnas al modelo
+            for (int i = 1; i <= columnCount; i++) {
+                model.addColumn(metaData.getColumnName(i));
+            }
+
+            // Agregar filas de datos al modelo
+            while (resultSet.next()) {
+                Object[] rowData = new Object[columnCount];
+                for (int i = 1; i <= columnCount; i++) {
+                    rowData[i - 1] = resultSet.getObject(i);
+                }
+                model.addRow(rowData);
+            }
+
+            // Crear JTable con el modelo
+            table = new JTable(model);
+
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, "Error al ejecutar la consulta: " + e.getMessage());
+        }
+        
+
+        return table; 
+    }
+
+public void sacarPDF(ActionEvent event) {
+    JTable tabla = aplicarFiltros(); // Obtener la JTable generada
+    if (tabla != null) {
+        try {
+            Document document = new Document();
+            PdfWriter.getInstance(document, new FileOutputStream("tabla.pdf"));
+            document.open();
+
+            PdfPTable pdfTable = new PdfPTable(tabla.getColumnCount());
+
+            // Agregar los encabezados de columna
+            for (int i = 0; i < tabla.getColumnCount(); i++) {
+                pdfTable.addCell(tabla.getColumnName(i));
+            }
+
+            // Agregar las filas de datos
+            for (int i = 0; i < tabla.getRowCount(); i++) {
+                for (int j = 0; j < tabla.getColumnCount(); j++) {
+                    pdfTable.addCell(tabla.getValueAt(i, j).toString());
+                }
+            }
+
+            document.add(pdfTable);
+            document.close();
+            JOptionPane.showMessageDialog(null, "PDF generado exitosamente.");
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, "Error al generar el PDF: " + e.getMessage());
+        }
+    } else {
+        JOptionPane.showMessageDialog(null, "No hay datos para exportar.");
+    }
+}
+
+
+
+
+
+
+    
+    
 
 
 
@@ -136,19 +215,19 @@ public class MainController {
     @FXML
     private void mostrarProductos() {
         String sql = "SELECT * FROM Productos";
-        mostrarDatos(sql);
+        mostrarTodosDatos(sql);
     }
 
     @FXML
     private void mostrarEmpleados() {
         String sql = "SELECT * FROM Empleados";
-        mostrarDatos(sql);
+        mostrarTodosDatos(sql);
     }
 
     @FXML
     private void mostrarVentas() {
         String sql = "SELECT * FROM Ventas";
-        mostrarDatos(sql);
+        mostrarTodosDatos(sql);
     }
 
    @FXML
@@ -186,9 +265,9 @@ public class MainController {
         }
     }
 
-   
 
-    private void mostrarDatos(String sql) {
+
+    private void mostrarTodosDatos(String sql) {
         resultadoArea.clear(); 
 
         try {
