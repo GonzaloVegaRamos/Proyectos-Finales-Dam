@@ -28,4 +28,5 @@ git clone https://github.com/GonzaloVegaRamos/Proyectos-Finales-Dam.git
 cd Proyectos-Finales-Dam
 ```
 ### 2. Ejecuta la aplicación
-Una vez dentro del proyecto, dirigete a la carpeta \interfaces\release\interfaces\ 
+Una vez dentro del proyecto, dirigete a la carpeta \interfaces\release\interfaces
+y ejecuta interfaces.exe
